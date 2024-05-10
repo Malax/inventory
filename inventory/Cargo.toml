@@ -3,13 +3,16 @@ name = "inventory"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = []
+
 [dependencies]
 hex = "0.4"
-semver = {version = "1", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
-sha2 = "0.10"
 thiserror = "1"
 toml = "0.8"
+sha2 = { version = "0.10", optional = true }
+semver = { version = "1", features = ["serde"], optional = true }
 
 [dev-dependencies]
 serde_test = "1"

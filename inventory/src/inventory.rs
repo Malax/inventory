@@ -9,7 +9,7 @@ use std::path::Path;
 /// Represents an inventory of artifacts.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Inventory<V, D> {
-    #[serde(bound = "V: Serialize + DeserializeOwned, D: Name")]
+    #[serde(bound = "V: Serialize + DeserializeOwned, D: DigestName")]
     pub artifacts: Vec<Artifact<V, D>>,
 }
 

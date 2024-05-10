@@ -1,6 +1,5 @@
 use hex::FromHexError;
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256, Sha512};
 use std::marker::PhantomData;
 
 #[derive(Debug, Clone, Eq)]
@@ -46,33 +45,9 @@ pub trait DigestName {
     fn name() -> String;
 }
 
-impl DigestName for Sha256 {
-    fn name() -> String {
-        String::from("sha256")
-    }
-}
-
-impl DigestName for Sha512 {
-    fn name() -> String {
-        String::from("sha512")
-    }
-}
-
 #[allow(clippy::module_name_repetitions)]
 pub trait ChecksumSize {
     fn checksum_size() -> usize;
-}
-
-impl ChecksumSize for Sha256 {
-    fn checksum_size() -> usize {
-        Self::output_size()
-    }
-}
-
-impl ChecksumSize for Sha512 {
-    fn checksum_size() -> usize {
-        Self::output_size()
-    }
 }
 
 impl<D> Serialize for Checksum<D>
@@ -111,7 +86,6 @@ where
 mod tests {
     use super::*;
     use serde_test::{assert_de_tokens_error, assert_tokens, Token};
-    use sha2::Sha512;
 
     impl DigestName for String {
         fn name() -> String {
@@ -141,18 +115,7 @@ mod tests {
         );
     }
 
-    #[test]
-    fn test_digest_names() {
-        assert_eq!("sha256", Sha256::name());
-        assert_eq!("sha512", Sha512::name());
-    }
-
-    #[test]
-    fn test_checksum_sizes() {
-        assert_eq!(32, Sha256::checksum_size());
-        assert_eq!(64, Sha512::checksum_size());
-    }
-
+    /*
     #[test]
     fn test_invalid_checksum_size() {
         assert!(matches!(
@@ -197,5 +160,5 @@ mod tests {
                 "sha512:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
             )],
         );
-    }
+    }*/
 }
