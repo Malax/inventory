@@ -1,4 +1,4 @@
-use crate::checksum::{Checksum, Name};
+use crate::checksum::{Checksum, DigestName};
 use core::fmt;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};

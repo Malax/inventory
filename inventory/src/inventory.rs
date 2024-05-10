@@ -1,5 +1,5 @@
 use crate::artifact::{Arch, Artifact, Os};
-use crate::checksum::Name;
+use crate::checksum::DigestName;
 use crate::version::VersionRequirement;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
@@ -48,7 +48,7 @@ pub fn read_inventory_file<V, D>(
 ) -> Result<Inventory<V, D>, ReadInventoryError>
 where
     V: Serialize + DeserializeOwned,
-    D: Name,
+    D: DigestName,
 {
     toml::from_str(&fs::read_to_string(path)?).map_err(ReadInventoryError::Parse)
 }

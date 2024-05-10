@@ -42,17 +42,17 @@ where
     }
 }
 
-pub trait Name {
+pub trait DigestName {
     fn name() -> String;
 }
 
-impl Name for Sha256 {
+impl DigestName for Sha256 {
     fn name() -> String {
         String::from("sha256")
     }
 }
 
-impl Name for Sha512 {
+impl DigestName for Sha512 {
     fn name() -> String {
         String::from("sha512")
     }
@@ -77,7 +77,7 @@ impl ChecksumSize for Sha512 {
 
 impl<D> Serialize for Checksum<D>
 where
-    D: Name,
+    D: DigestName,
 {
     fn serialize<T>(&self, serializer: T) -> Result<T::Ok, T::Error>
     where
@@ -89,7 +89,7 @@ where
 
 impl<'de, D> Deserialize<'de> for Checksum<D>
 where
-    D: Name,
+    D: DigestName,
 {
     fn deserialize<T>(deserializer: T) -> Result<Self, T::Error>
     where
@@ -113,7 +113,7 @@ mod tests {
     use serde_test::{assert_de_tokens_error, assert_tokens, Token};
     use sha2::Sha512;
 
-    impl Name for String {
+    impl DigestName for String {
         fn name() -> String {
             String::from("foo")
         }
