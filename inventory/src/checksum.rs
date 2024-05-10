@@ -24,8 +24,8 @@ pub enum Error {
 }
 
 impl<D> TryFrom<String> for Checksum<D>
-    where
-        D: ChecksumSize,
+where
+    D: ChecksumSize,
 {
     type Error = Error;
 
@@ -76,24 +76,24 @@ impl ChecksumSize for Sha512 {
 }
 
 impl<D> Serialize for Checksum<D>
-    where
-        D: Name,
+where
+    D: Name,
 {
     fn serialize<T>(&self, serializer: T) -> Result<T::Ok, T::Error>
-        where
-            T: serde::Serializer,
+    where
+        T: serde::Serializer,
     {
         serializer.serialize_str(&format!("{}:{}", D::name(), hex::encode(&self.value)))
     }
 }
 
 impl<'de, D> Deserialize<'de> for Checksum<D>
-    where
-        D: Name,
+where
+    D: Name,
 {
     fn deserialize<T>(deserializer: T) -> Result<Self, T::Error>
-        where
-            T: serde::Deserializer<'de>,
+    where
+        T: serde::Deserializer<'de>,
     {
         use serde::de::Error;
         String::deserialize(deserializer)?

@@ -4,6 +4,7 @@ use crate::version::VersionRequirement;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::fs;
+use std::path::Path;
 
 /// Represents an inventory of artifacts.
 #[derive(Debug, Serialize, Deserialize)]
@@ -42,7 +43,9 @@ pub enum ReadInventoryError {
 ///
 /// Will return an Err if the file is missing, not readable, or if the
 /// file contents is not formatted properly.
-pub fn read_inventory_file<V, D>(path: &str) -> Result<Inventory<V, D>, ReadInventoryError>
+pub fn read_inventory_file<V, D>(
+    path: impl AsRef<Path>,
+) -> Result<Inventory<V, D>, ReadInventoryError>
 where
     V: Serialize + DeserializeOwned,
     D: Name,
