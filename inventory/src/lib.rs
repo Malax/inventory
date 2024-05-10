@@ -1,3 +1,4 @@
+pub mod artifact;
 pub mod checksum;
-pub mod inv;
+pub mod inventory;
 pub mod semvrs;

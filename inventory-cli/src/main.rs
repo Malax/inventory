@@ -1,4 +1,4 @@
-use inventory::inv::{read_inventory_file, Artifact, Inventory};
+use inventory::inventory::{read_inventory_file, Artifact, Inventory};
 use std::path::PathBuf;
 
 fn main() {
