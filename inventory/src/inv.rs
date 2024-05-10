@@ -8,10 +8,20 @@ use std::hash::Hash;
 use std::{fmt::Display, str::FromStr};
 
 /// Represents an inventory of artifacts.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Inventory<V, D> {
     #[serde(bound = "V: Serialize + DeserializeOwned, D: Name")]
     pub artifacts: Vec<Artifact<V, D>>,
+}
+
+impl<V, D> Inventory<V, D> {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn push(&mut self, artifact: Artifact<V, D>) {
+        self.artifacts.push(artifact);
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -26,8 +36,8 @@ pub struct Artifact<V, D> {
 }
 
 impl<V, D> PartialEq for Artifact<V, D>
-    where
-        V: Eq,
+where
+    V: Eq,
 {
     fn eq(&self, other: &Self) -> bool {
         self.version == other.version
@@ -131,9 +141,9 @@ pub enum ReadInventoryError {
 /// Will return an Err if the file is missing, not readable, or if the
 /// file contents is not formatted properly.
 pub fn read_inventory_file<V, D>(path: &str) -> Result<Inventory<V, D>, ReadInventoryError>
-    where
-        V: Serialize + DeserializeOwned,
-        D: Name,
+where
+    V: Serialize + DeserializeOwned,
+    D: Name,
 {
     toml::from_str(&fs::read_to_string(path)?).map_err(ReadInventoryError::Parse)
 }
@@ -150,8 +160,8 @@ pub fn resolve<'a, V, D, R>(
     arch: Arch,
     requirement: &'a R,
 ) -> Option<&'a Artifact<V, D>>
-    where
-        R: VersionRequirement<V>,
+where
+    R: VersionRequirement<V>,
 {
     artifacts
         .iter()
@@ -243,7 +253,7 @@ mod tests {
             Arch::Amd64,
             &String::from("foo")
         )
-            .is_none());
+        .is_none());
     }
 
     #[test]
@@ -254,7 +264,7 @@ mod tests {
             Arch::Arm64,
             &String::from("bar")
         )
-            .is_none());
+        .is_none());
     }
 
     fn create_artifact(version: &str, os: Os, arch: Arch) -> Artifact<String, String> {
