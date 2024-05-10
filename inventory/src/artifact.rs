@@ -111,7 +111,7 @@ impl FromStr for Arch {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::inventory::VersionRequirement;
+    use crate::version::VersionRequirement;
 
     #[test]
     fn test_arch_display_format() {

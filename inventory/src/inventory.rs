@@ -1,5 +1,6 @@
 use crate::artifact::{Arch, Artifact, Os};
 use crate::checksum::Name;
+use crate::version::VersionRequirement;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -47,10 +48,6 @@ where
     D: Name,
 {
     toml::from_str(&fs::read_to_string(path)?).map_err(ReadInventoryError::Parse)
-}
-
-pub trait VersionRequirement<V> {
-    fn satisfies(&self, version: &V) -> bool;
 }
 
 /// Find the first artifact that satisfies a `VersionRequirement<V>` for
