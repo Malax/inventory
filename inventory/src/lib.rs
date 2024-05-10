@@ -4,6 +4,11 @@ pub mod inventory;
 pub mod version;
 
 #[cfg(feature = "semver")]
-pub mod semvrs;
+mod semver;
 #[cfg(feature = "sha2")]
 mod sha2;
+
+#[cfg(feature = "semver")]
+pub use semver::*;
+#[cfg(feature = "sha2")]
+pub use sha2::*;
