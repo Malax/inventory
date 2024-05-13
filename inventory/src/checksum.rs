@@ -30,7 +30,7 @@ pub enum ChecksumParseError {
 
 impl<D> FromStr for Checksum<D>
 where
-    D: DigestName,
+    D: Digest,
 {
     type Err = ChecksumParseError;
 
@@ -58,14 +58,14 @@ where
     }
 }
 
-pub trait DigestName {
+pub trait Digest {
     fn name_compatible(name: &str) -> bool;
     fn length() -> usize;
 }
 
 impl<D> Serialize for Checksum<D>
 where
-    D: DigestName,
+    D: Digest,
 {
     fn serialize<T>(&self, serializer: T) -> Result<T::Ok, T::Error>
     where
@@ -77,7 +77,7 @@ where
 
 impl<'de, D> Deserialize<'de> for Checksum<D>
 where
-    D: DigestName,
+    D: Digest,
 {
     fn deserialize<T>(deserializer: T) -> Result<Self, T::Error>
     where
@@ -106,7 +106,7 @@ pub(crate) mod tests {
         }
     }
 
-    impl DigestName for BogusDigest {
+    impl Digest for BogusDigest {
         fn name_compatible(name: &str) -> bool {
             name == "bogus"
         }

@@ -1,4 +1,4 @@
-use crate::checksum::{Checksum, DigestName};
+use crate::checksum::{Checksum, Digest};
 use core::fmt;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
@@ -13,7 +13,7 @@ pub struct Artifact<V, D> {
     pub os: Os,
     pub arch: Arch,
     pub url: String,
-    #[serde(bound = "D: DigestName")]
+    #[serde(bound = "D: Digest")]
     pub checksum: Checksum<D>,
 }
 

@@ -1,5 +1,5 @@
 use crate::artifact::{Arch, Artifact, Os};
-use crate::checksum::DigestName;
+use crate::checksum::Digest;
 use crate::version::VersionRequirement;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
@@ -9,7 +9,7 @@ use std::path::Path;
 /// Represents an inventory of artifacts.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Inventory<V, D> {
-    #[serde(bound = "V: Serialize + DeserializeOwned, D: DigestName")]
+    #[serde(bound = "V: Serialize + DeserializeOwned, D: Digest")]
     pub artifacts: Vec<Artifact<V, D>>,
 }
 
@@ -48,7 +48,7 @@ pub fn read_inventory_file<V, D>(
 ) -> Result<Inventory<V, D>, ReadInventoryError>
 where
     V: Serialize + DeserializeOwned,
-    D: DigestName,
+    D: Digest,
 {
     toml::from_str(&fs::read_to_string(path)?).map_err(ReadInventoryError::Parse)
 }
