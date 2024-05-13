@@ -3,7 +3,6 @@ use core::fmt;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
-use std::hash::Hash;
 use std::str::FromStr;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
@@ -15,12 +14,6 @@ pub struct Artifact<V, D> {
     pub url: String,
     #[serde(bound = "D: Digest")]
     pub checksum: Checksum<D>,
-}
-
-impl<V, D> Hash for Artifact<V, D> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.checksum.value.hash(state);
-    }
 }
 
 impl<V: Display, D> Display for Artifact<V, D> {
