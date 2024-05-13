@@ -1,5 +1,4 @@
 use crate::checksum::{Checksum, Digest};
-use core::fmt;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
@@ -17,7 +16,7 @@ pub struct Artifact<V, D> {
 }
 
 impl<V: Display, D> Display for Artifact<V, D> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{} ({}-{})", self.version, self.os, self.arch)
     }
 }
