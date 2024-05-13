@@ -9,7 +9,9 @@ mod semver;
 mod sha2;
 mod unit;
 
+#[allow(unused_imports)]
 #[cfg(feature = "semver")]
 pub use semver::*;
+#[allow(unused_imports)]
 #[cfg(feature = "sha2")]
 pub use sha2::*;
