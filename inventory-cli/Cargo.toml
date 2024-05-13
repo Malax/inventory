@@ -4,5 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-clap = "4"
-inventory = { path = "../inventory" }
+clap = { version = "4", features = ["derive"] }
+semver = "1"
+inventory = { path = "../inventory", features = ["semver"] }

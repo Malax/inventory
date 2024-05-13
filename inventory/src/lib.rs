@@ -7,6 +7,7 @@ pub mod version;
 mod semver;
 #[cfg(feature = "sha2")]
 mod sha2;
+mod unit;
 
 #[cfg(feature = "semver")]
 pub use semver::*;
