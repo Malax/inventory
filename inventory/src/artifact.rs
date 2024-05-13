@@ -15,12 +15,6 @@ pub struct Artifact<V, D> {
     pub checksum: Checksum<D>,
 }
 
-impl<V: Display, D> Display for Artifact<V, D> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} ({}-{})", self.version, self.os, self.arch)
-    }
-}
-
 #[derive(Debug, Serialize, Deserialize, Copy, Clone, Eq, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum Os {
@@ -133,25 +127,6 @@ mod tests {
             UnsupportedOsError(..)
         ));
     }
-
-    /*
-    #[test]
-    fn test_artifact_display() {
-        assert_eq!(
-            "foo (linux-arm64)",
-            Artifact {
-                version: String::from("foo"),
-                os: Os::Linux,
-                arch: Arch::Arm64,
-                url: "https://example.com/".to_string(),
-                checksum: Checksum::<sha2::Sha256>::try_from(String::from(
-                    "7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069"
-                ))
-                .unwrap(),
-            }
-            .to_string()
-        );
-    }*/
 
     impl VersionRequirement<String> for String {
         fn satisfies(&self, version: &String) -> bool {
