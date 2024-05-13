@@ -6,7 +6,7 @@ use std::fmt::Display;
 use std::hash::Hash;
 use std::str::FromStr;
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
 pub struct Artifact<V, D> {
     #[serde(bound = "V: Serialize + DeserializeOwned")]
     pub version: V,
@@ -16,21 +16,6 @@ pub struct Artifact<V, D> {
     #[serde(bound = "D: Digest")]
     pub checksum: Checksum<D>,
 }
-
-impl<V, D> PartialEq for Artifact<V, D>
-where
-    V: Eq,
-{
-    fn eq(&self, other: &Self) -> bool {
-        self.version == other.version
-            && self.os == other.os
-            && self.arch == other.arch
-            && self.url == other.url
-            && self.checksum == other.checksum
-    }
-}
-
-impl<V, D> Eq for Artifact<V, D> where V: Eq {}
 
 impl<V, D> Hash for Artifact<V, D> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
