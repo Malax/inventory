@@ -36,7 +36,7 @@ where
 
     fn from_str(value: &str) -> Result<Self, Self::Err> {
         let (name, value) = value
-            .split_once(":")
+            .split_once(':')
             .ok_or(ChecksumParseError::MissingPrefix)
             .and_then(|(key, value)| {
                 hex::decode(value)
