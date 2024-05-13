@@ -1,53 +1,66 @@
 use hex::FromHexError;
 use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
+use std::str::FromStr;
 
 #[derive(Debug, Clone, Eq)]
 pub struct Checksum<D> {
+    pub name: String,
     pub value: Vec<u8>,
     digest: PhantomData<D>,
 }
 
 impl<D> PartialEq for Checksum<D> {
     fn eq(&self, other: &Self) -> bool {
-        self.value == other.value
+        (self.name == other.name) && (self.value == other.value)
     }
 }
 
-#[derive(thiserror::Error, Debug)]
-pub enum Error {
-    #[error("Invalid checksum size for: {0}")]
-    InvalidSize(String),
-    #[error("Invalid input string")]
-    HexError(#[from] FromHexError),
+#[derive(thiserror::Error, Debug, PartialEq)]
+pub enum ChecksumParseError {
+    #[error("Checksum prefix is missing")]
+    MissingPrefix,
+    #[error("Checksum prefix \"{0}\" is incompatible")]
+    IncompatiblePrefix(String),
+    #[error("Checksum value cannot be parsed as hex string: {0}")]
+    InvalidValue(FromHexError),
+    #[error("Checksum value length {0} is invalid")]
+    InvalidChecksumLength(usize),
 }
 
-impl<D> TryFrom<String> for Checksum<D>
+impl<D> FromStr for Checksum<D>
 where
-    D: ChecksumSize,
+    D: DigestName,
 {
-    type Error = Error;
+    type Err = ChecksumParseError;
 
-    fn try_from(input: String) -> Result<Self, Self::Error> {
-        let value: Vec<u8> = hex::decode(input.clone())?;
-        if value.len() == D::checksum_size() {
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        let (name, value) = value
+            .split_once(":")
+            .ok_or(ChecksumParseError::MissingPrefix)
+            .and_then(|(key, value)| {
+                hex::decode(value)
+                    .map_err(ChecksumParseError::InvalidValue)
+                    .map(|value| (String::from(key), value))
+            })?;
+
+        if !D::name_compatible(&name) {
+            Err(ChecksumParseError::IncompatiblePrefix(name))
+        } else if value.len() != D::length() {
+            Err(ChecksumParseError::InvalidChecksumLength(value.len()))
+        } else {
             Ok(Checksum {
+                name,
                 value,
                 digest: PhantomData,
             })
-        } else {
-            Err(Error::InvalidSize(input))
         }
     }
 }
 
 pub trait DigestName {
-    fn name() -> String;
-}
-
-#[allow(clippy::module_name_repetitions)]
-pub trait ChecksumSize {
-    fn checksum_size() -> usize;
+    fn name_compatible(name: &str) -> bool;
+    fn length() -> usize;
 }
 
 impl<D> Serialize for Checksum<D>
@@ -58,7 +71,7 @@ where
     where
         T: serde::Serializer,
     {
-        serializer.serialize_str(&format!("{}:{}", D::name(), hex::encode(&self.value)))
+        serializer.serialize_str(&format!("{}:{}", self.name, hex::encode(&self.value)))
     }
 }
 
@@ -70,95 +83,76 @@ where
     where
         T: serde::Deserializer<'de>,
     {
-        use serde::de::Error;
-        String::deserialize(deserializer)?
-            .strip_prefix(&format!("{}:", D::name()))
-            .ok_or_else(|| T::Error::custom("checksum prefix is invalid"))
-            .map(|value| hex::decode(value).map_err(T::Error::custom))?
-            .map(|value| Checksum::<_> {
-                value,
-                digest: PhantomData,
-            })
+        String::deserialize(deserializer)
+            .and_then(|string| string.parse::<Self>().map_err(serde::de::Error::custom))
     }
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
     use serde_test::{assert_de_tokens_error, assert_tokens, Token};
 
-    impl DigestName for String {
-        fn name() -> String {
-            String::from("foo")
+    #[derive(Debug)]
+    pub(crate) struct BogusDigest;
+
+    impl BogusDigest {
+        pub(crate) fn checksum(hex_string: &str) -> Checksum<Self> {
+            Checksum {
+                name: String::from("bogus"),
+                value: hex::decode(hex_string).unwrap(),
+                digest: Default::default(),
+            }
         }
     }
 
-    impl ChecksumSize for String {
-        fn checksum_size() -> usize {
-            2
+    impl DigestName for BogusDigest {
+        fn name_compatible(name: &str) -> bool {
+            name == "bogus"
+        }
+
+        fn length() -> usize {
+            4
         }
     }
 
     #[test]
     fn test_checksum_serialization() {
         assert_tokens(
-            &Checksum::<String>::try_from("abcd".to_string()).unwrap(),
-            &[Token::BorrowedStr("foo:abcd")],
+            &BogusDigest::checksum("cafebabe"),
+            &[Token::BorrowedStr("bogus:cafebabe")],
         );
     }
 
     #[test]
     fn test_invalid_checksum_deserialization() {
-        assert_de_tokens_error::<Checksum<String>>(
-            &[Token::BorrowedStr("baz:bar")],
-            "checksum prefix is invalid",
+        assert_de_tokens_error::<Checksum<BogusDigest>>(
+            &[Token::BorrowedStr("baz:cafebabe")],
+            "Checksum prefix \"baz\" is incompatible",
         );
     }
 
-    /*
     #[test]
     fn test_invalid_checksum_size() {
-        assert!(matches!(
-            Checksum::<Sha256>::try_from("123456".to_string()),
-            Err(Error::InvalidSize(..))
-        ));
+        assert_eq!(
+            "bogus:123456".parse::<Checksum<BogusDigest>>(),
+            Err(ChecksumParseError::InvalidChecksumLength(3))
+        );
     }
 
     #[test]
     fn test_invalid_hex_input() {
         assert!(matches!(
-            Checksum::<Sha256>::try_from("quux".to_string()),
-            Err(Error::HexError(..))
+            "bogus:quux".parse::<Checksum<BogusDigest>>(),
+            Err(ChecksumParseError::InvalidValue(
+                FromHexError::InvalidHexCharacter { c: 'q', index: 0 }
+            ))
         ));
     }
 
     #[test]
-    fn test_sha256_checksum_parse_and_serialize() {
-        let result: Result<Checksum<Sha256>, _> = Checksum::try_from(
-            "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890".to_string(),
-        );
-
-        assert!(result.is_ok());
-        assert_tokens(
-            &result.unwrap(),
-            &[Token::BorrowedStr(
-                "sha256:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-            )],
-        );
+    fn test_checksum_parse_and_serialize() {
+        let checksum = "bogus:cafebabe".parse::<Checksum<BogusDigest>>().unwrap();
+        assert_tokens(&checksum, &[Token::BorrowedStr("bogus:cafebabe")]);
     }
-
-    #[test]
-    fn test_sha512_checksum_parse_and_serialize() {
-        let result: Result<Checksum<Sha512>, _> = Checksum::try_from(
-            "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890".to_string(),
-        );
-
-        assert!(result.is_ok());
-        assert_tokens(
-            &result.unwrap(),
-            &[Token::BorrowedStr(
-                "sha512:abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-            )],
-        );
-    }*/
 }

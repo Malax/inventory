@@ -73,7 +73,7 @@ where
 #[cfg(test)]
 mod test {
     use crate::artifact::{Arch, Artifact, Os};
-    use crate::checksum::Checksum;
+    use crate::checksum::tests::BogusDigest;
     use crate::inventory::resolve;
 
     #[test]
@@ -113,13 +113,13 @@ mod test {
         .is_none());
     }
 
-    fn create_artifact(version: &str, os: Os, arch: Arch) -> Artifact<String, String> {
-        Artifact::<String, String> {
+    fn create_artifact(version: &str, os: Os, arch: Arch) -> Artifact<String, BogusDigest> {
+        Artifact {
             version: String::from(version),
             os,
             arch,
             url: "https://example.com".to_string(),
-            checksum: Checksum::try_from("aaaa".to_string()).unwrap(),
+            checksum: BogusDigest::checksum("cafebabe"),
         }
     }
 }
