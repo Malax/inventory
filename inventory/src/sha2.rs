@@ -6,8 +6,8 @@ impl Digest for Sha256 {
         name == "sha256"
     }
 
-    fn length() -> usize {
-        Self::output_size()
+    fn length_compatible(len: usize) -> bool {
+        len == Self::output_size()
     }
 }
 
@@ -16,7 +16,7 @@ impl Digest for Sha512 {
         name == "sha512"
     }
 
-    fn length() -> usize {
-        Self::output_size()
+    fn length_compatible(len: usize) -> bool {
+        len == Self::output_size()
     }
 }

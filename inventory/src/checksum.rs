@@ -46,7 +46,7 @@ where
 
         if !D::name_compatible(&name) {
             Err(ChecksumParseError::IncompatiblePrefix(name))
-        } else if value.len() != D::length() {
+        } else if !D::length_compatible(value.len()) {
             Err(ChecksumParseError::InvalidChecksumLength(value.len()))
         } else {
             Ok(Checksum {
@@ -60,7 +60,7 @@ where
 
 pub trait Digest {
     fn name_compatible(name: &str) -> bool;
-    fn length() -> usize;
+    fn length_compatible(len: usize) -> bool;
 }
 
 impl<D> Serialize for Checksum<D>
@@ -111,8 +111,8 @@ pub(crate) mod tests {
             name == "bogus"
         }
 
-        fn length() -> usize {
-            4
+        fn length_compatible(len: usize) -> bool {
+            len == 4
         }
     }
 
