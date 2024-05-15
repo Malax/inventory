@@ -5,7 +5,7 @@ use std::fmt::Display;
 use std::str::FromStr;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Artifact<V, D> {
+pub struct Artifact<V, D, M> {
     #[serde(bound = "V: Serialize + DeserializeOwned")]
     pub version: V,
     pub os: Os,
@@ -13,11 +13,14 @@ pub struct Artifact<V, D> {
     pub url: String,
     #[serde(bound = "D: Digest")]
     pub checksum: Checksum<D>,
+    #[serde(bound = "M: Serialize + DeserializeOwned")]
+    pub metadata: M,
 }
 
-impl<V, D> PartialEq for Artifact<V, D>
+impl<V, D, M> PartialEq for Artifact<V, D, M>
 where
     V: Eq,
+    M: Eq,
 {
     fn eq(&self, other: &Self) -> bool {
         self.version == other.version
@@ -25,10 +28,16 @@ where
             && self.arch == other.arch
             && self.url == other.url
             && self.checksum == other.checksum
+            && self.metadata == other.metadata
     }
 }
 
-impl<V, D> Eq for Artifact<V, D> where V: Eq {}
+impl<V, D, M> Eq for Artifact<V, D, M>
+where
+    V: Eq,
+    M: Eq,
+{
+}
 
 #[derive(Debug, Serialize, Deserialize, Copy, Clone, Eq, PartialEq)]
 #[serde(rename_all = "lowercase")]

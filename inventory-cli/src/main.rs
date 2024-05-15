@@ -35,7 +35,7 @@ fn main() {
         Args::Add(args) => {
             let mut inventory = std::fs::read_to_string(&args.path)
                 .unwrap()
-                .parse::<Inventory<String, ()>>()
+                .parse::<Inventory<String, (), ()>>()
                 .unwrap();
 
             inventory.push(Artifact {
@@ -44,6 +44,7 @@ fn main() {
                 arch: args.arch,
                 url: args.url,
                 checksum: args.checksum,
+                metadata: (),
             });
 
             std::fs::write(&args.path, inventory.to_string()).unwrap();

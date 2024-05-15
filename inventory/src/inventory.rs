@@ -1,91 +1,74 @@
 use crate::artifact::{Arch, Artifact, Os};
 use crate::checksum::Digest;
-use crate::version::VersionRequirement;
+use crate::version::ArtifactRequirement;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::fmt::Formatter;
-use std::fs;
-use std::path::Path;
 use std::str::FromStr;
 
 /// Represents an inventory of artifacts.
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Inventory<V, D> {
-    #[serde(bound = "V: Serialize + DeserializeOwned, D: Digest")]
-    pub artifacts: Vec<Artifact<V, D>>,
+pub struct Inventory<V, D, M> {
+    #[serde(bound = "V: Serialize + DeserializeOwned, D: Digest, M: Serialize + DeserializeOwned")]
+    pub artifacts: Vec<Artifact<V, D, M>>,
 }
 
-impl<V, D> Default for Inventory<V, D> {
+impl<V, D, M> Default for Inventory<V, D, M> {
     fn default() -> Self {
         Self { artifacts: vec![] }
     }
 }
 
-impl<V, D> Inventory<V, D> {
+impl<V, D, M> Inventory<V, D, M> {
     pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn push(&mut self, artifact: Artifact<V, D>) {
+    pub fn push(&mut self, artifact: Artifact<V, D, M>) {
         self.artifacts.push(artifact);
     }
 
-    pub fn resolve<R>(&self, os: Os, arch: Arch, requirement: &R) -> Option<&Artifact<V, D>>
+    pub fn resolve<R>(&self, os: Os, arch: Arch, requirement: &R) -> Option<&Artifact<V, D, M>>
     where
         V: Ord,
-        R: VersionRequirement<V>,
+        R: ArtifactRequirement<V, M>,
     {
         self.artifacts
             .iter()
             .filter(|artifact| {
                 artifact.os == os
                     && artifact.arch == arch
-                    && requirement.satisfies(&artifact.version)
+                    && requirement.satisfies_version(&artifact.version)
+                    && requirement.satisfies_metadata(&artifact.metadata)
             })
             .max_by_key(|artifact| &artifact.version)
     }
 }
 
 #[derive(thiserror::Error, Debug)]
-pub enum ReadInventoryError {
-    #[error("Couldn't read inventory file: {0}")]
-    Io(#[from] std::io::Error),
-    #[error("Couldn't parse inventory toml: {0}")]
-    Parse(#[from] toml::de::Error),
+pub enum ParseInventoryError {
+    #[error("TOML parsing error: {0}")]
+    TomlError(toml::de::Error),
 }
 
-/// Reads a TOML-formatted file to an `Inventory<V, D>`.
-///
-/// # Errors
-///
-/// Will return an Err if the file is missing, not readable, or if the
-/// file contents is not formatted properly.
-pub fn read_inventory_file<V, D>(
-    path: impl AsRef<Path>,
-) -> Result<Inventory<V, D>, ReadInventoryError>
+impl<V, D, M> FromStr for Inventory<V, D, M>
 where
     V: Serialize + DeserializeOwned,
     D: Digest,
+    M: Serialize + DeserializeOwned,
 {
-    toml::from_str(&fs::read_to_string(path)?).map_err(ReadInventoryError::Parse)
-}
-
-impl<V, D> FromStr for Inventory<V, D>
-where
-    V: Serialize + DeserializeOwned,
-    D: Digest,
-{
-    type Err = toml::de::Error;
+    type Err = ParseInventoryError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        toml::from_str(s)
+        toml::from_str(s).map_err(ParseInventoryError::TomlError)
     }
 }
 
-impl<V, D> std::fmt::Display for Inventory<V, D>
+impl<V, D, M> std::fmt::Display for Inventory<V, D, M>
 where
     V: Serialize + DeserializeOwned,
     D: Digest,
+    M: Serialize + DeserializeOwned,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str(&toml::to_string(self).unwrap())
@@ -132,13 +115,14 @@ mod test {
             .is_none());
     }
 
-    fn create_artifact(version: &str, os: Os, arch: Arch) -> Artifact<String, BogusDigest> {
+    fn create_artifact(version: &str, os: Os, arch: Arch) -> Artifact<String, BogusDigest, ()> {
         Artifact {
             version: String::from(version),
             os,
             arch,
             url: "https://example.com".to_string(),
             checksum: BogusDigest::checksum("cafebabe"),
+            metadata: (),
         }
     }
 }
