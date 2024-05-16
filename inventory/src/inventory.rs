@@ -3,6 +3,8 @@ use crate::checksum::Digest;
 use crate::version::ArtifactRequirement;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+use std::cmp;
+use std::cmp::Ordering;
 use std::fmt::Formatter;
 use std::str::FromStr;
 
@@ -42,6 +44,43 @@ impl<V, D, M> Inventory<V, D, M> {
                     && requirement.satisfies_metadata(&artifact.metadata)
             })
             .max_by_key(|artifact| &artifact.version)
+    }
+
+    pub fn partial_resolve<R>(
+        &self,
+        os: Os,
+        arch: Arch,
+        requirement: &R,
+    ) -> Option<&Artifact<V, D, M>>
+    where
+        V: PartialOrd,
+        R: ArtifactRequirement<V, M>,
+    {
+        #[inline]
+        fn partial_max_by_key<I, F, A>(iterator: I, f: F) -> Option<I::Item>
+        where
+            I: Iterator,
+            F: Fn(&I::Item) -> A,
+            A: PartialOrd,
+        {
+            iterator.fold(None, |acc, item| match acc {
+                None => Some(item),
+                Some(acc) => match f(&item).partial_cmp(&f(&acc)) {
+                    Some(Ordering::Greater | Ordering::Equal) => Some(item),
+                    None | Some(Ordering::Less) => Some(acc),
+                },
+            })
+        }
+
+        partial_max_by_key(
+            self.artifacts.iter().filter(|artifact| {
+                artifact.os == os
+                    && artifact.arch == arch
+                    && requirement.satisfies_version(&artifact.version)
+                    && requirement.satisfies_metadata(&artifact.metadata)
+            }),
+            |artifact| &artifact.version,
+        )
     }
 }
 
