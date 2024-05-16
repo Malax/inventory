@@ -1,5 +1,5 @@
 pub trait ArtifactRequirement<V, M> {
-    fn satisfies_metadata(&self, metadata: &M) -> bool;
+    fn satisfies_metadata(&self, metadata: &Option<M>) -> bool;
     fn satisfies_version(&self, version: &V) -> bool;
 }
 
@@ -11,7 +11,7 @@ impl<V, M, VR> ArtifactRequirement<V, M> for VR
 where
     VR: VersionRequirement<V>,
 {
-    fn satisfies_metadata(&self, _: &M) -> bool {
+    fn satisfies_metadata(&self, _: &Option<M>) -> bool {
         true
     }
 

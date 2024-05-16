@@ -13,8 +13,8 @@ pub struct Artifact<V, D, M> {
     pub url: String,
     #[serde(bound = "D: Digest")]
     pub checksum: Checksum<D>,
-    #[serde(bound = "M: Serialize + DeserializeOwned")]
-    pub metadata: M,
+    #[serde(default, bound = "M: Serialize + DeserializeOwned")]
+    pub metadata: Option<M>,
 }
 
 impl<V, D, M> PartialEq for Artifact<V, D, M>

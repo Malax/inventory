@@ -9,7 +9,9 @@ use std::str::FromStr;
 /// Represents an inventory of artifacts.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Inventory<V, D, M> {
-    #[serde(bound = "V: Serialize + DeserializeOwned, D: Digest, M: Serialize + DeserializeOwned")]
+    #[serde(
+        bound = "V: Serialize + DeserializeOwned, D: Digest, M: Serialize + DeserializeOwned + Default"
+    )]
     pub artifacts: Vec<Artifact<V, D, M>>,
 }
 
@@ -55,7 +57,7 @@ impl<V, D, M> FromStr for Inventory<V, D, M>
 where
     V: Serialize + DeserializeOwned,
     D: Digest,
-    M: Serialize + DeserializeOwned,
+    M: Serialize + DeserializeOwned + Default,
 {
     type Err = ParseInventoryError;
 
@@ -68,7 +70,7 @@ impl<V, D, M> std::fmt::Display for Inventory<V, D, M>
 where
     V: Serialize + DeserializeOwned,
     D: Digest,
-    M: Serialize + DeserializeOwned,
+    M: Serialize + DeserializeOwned + Default,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.write_str(&toml::to_string(self).unwrap())
@@ -122,7 +124,7 @@ mod test {
             arch,
             url: "https://example.com".to_string(),
             checksum: BogusDigest::checksum("cafebabe"),
-            metadata: (),
+            metadata: Some(()),
         }
     }
 }
