@@ -124,7 +124,7 @@ mod test {
             arch,
             url: "https://example.com".to_string(),
             checksum: BogusDigest::checksum("cafebabe"),
-            metadata: Some(()),
+            metadata: None,
         }
     }
 }

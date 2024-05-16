@@ -44,7 +44,7 @@ fn main() {
                 arch: args.arch,
                 url: args.url,
                 checksum: args.checksum,
-                metadata: Some(()),
+                metadata: None,
             });
 
             std::fs::write(&args.path, inventory.to_string()).unwrap();
