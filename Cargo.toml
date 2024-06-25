@@ -3,3 +3,6 @@ resolver = "2"
 members = [
     "inventory"
 , "inventory-cli"]
+
+[workspace.package]
+license = "BSD-3-Clause"
