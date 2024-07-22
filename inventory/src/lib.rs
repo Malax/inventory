@@ -1,3 +1,5 @@
+#![doc = include_str!("../../README.md")]
+
 pub mod artifact;
 pub mod checksum;
 pub mod inventory;
